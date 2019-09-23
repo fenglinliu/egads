@@ -23,6 +23,5 @@ public class JythonTest {
         PythonInterpreter interpreter = new PythonInterpreter();
         interpreter.exec("print('hello')");
         interpreter.exec("print('Hello Python World!')");
-
     }
 }
