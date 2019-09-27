@@ -12,8 +12,11 @@ import com.yahoo.egads.control.ProcessableObject;
 import com.yahoo.egads.control.ProcessableObjectFactory;
 import java.util.Properties;
 import com.yahoo.egads.data.TimeSeries;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 
+@Slf4j
 public class FileInputProcessor implements InputProcessor {
     
     private String file = null;

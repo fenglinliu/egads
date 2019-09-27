@@ -10,6 +10,8 @@
 package com.yahoo.egads.utilities;
 
 import com.yahoo.egads.data.TimeSeries;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.StringTokenizer;
 import java.util.ArrayList;
 import java.io.BufferedReader;
@@ -17,6 +19,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
+@Slf4j
 public class FileUtils {
     
     // Creates a time-series from a file.
@@ -41,11 +44,13 @@ public class FileUtils {
         try {
             String line = "";
             // Create the file reader.
+            log.debug("从{}处读取数据", fileToParse);
             fileReader = new BufferedReader(new FileReader(fileToParse));
 
             // Read the file line by line
             boolean firstLine = true;
             while ((line = fileReader.readLine()) != null) {
+                log.debug("读取到的数据:{}", line);
                 // Get all tokens available in line.
                 String[] tokens = line.split(delimiter);
                 Long curTimestamp = null;

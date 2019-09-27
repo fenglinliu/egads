@@ -6,6 +6,8 @@ import java.util.Properties;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import com.yahoo.egads.utilities.*;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
 
 /*
@@ -22,7 +24,7 @@ import java.io.File;
  *     TODO: write to anomaly DB.
  * 
  */
-
+@Slf4j
 public class Egads {
     public static void main(String[] args) throws Exception {
 
@@ -35,6 +37,7 @@ public class Egads {
         // for now it is assumed it's a static file.
         Properties p = new Properties();
         String config = args[0];
+        log.debug("config:{}", config);
         File f = new File(config);
         boolean isRegularFile = f.exists();
         

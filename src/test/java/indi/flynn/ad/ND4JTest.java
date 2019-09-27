@@ -34,6 +34,5 @@ public class ND4JTest {
 
         Nd4j.arange(3);
 
-
     }
 }
