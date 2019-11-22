@@ -1,0 +1,3 @@
+VM Options  -Dlog4j.configurationFile=src/test/resources/log4j2.xml
+
+Program arguments src/test/resources/sample_config.ini src/test/resources/sample_input.csv
