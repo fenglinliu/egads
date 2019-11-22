@@ -24,11 +24,18 @@ public class FileInputProcessor implements InputProcessor {
     public FileInputProcessor(String file) {
         this.file = file;
     }
-    
+
+    /**
+     * 从文件中读入数据，并返回结果
+     *
+     * @param p
+     * @throws Exception
+     */
     public void processInput(Properties p) throws Exception {
-        // Parse the input timeseries.
+        // 建立时序模型(time, value)，多个属性会有多个时序模型放入到List中
         ArrayList<TimeSeries> metrics = com.yahoo.egads.utilities.FileUtils
                 .createTimeSeries(this.file, p);
+        // 循环处理每一个时间序列
         for (TimeSeries ts : metrics) {
             ProcessableObject po = ProcessableObjectFactory.create(ts, p);
             po.process();

@@ -35,28 +35,34 @@ public class Egads {
 
         // TODO: This config will be retrieved from ConfigDB later,
         // for now it is assumed it's a static file.
-        Properties p = new Properties();
+        Properties properties = new Properties();
+        // args数组中，第一个元素是配置文件，第二个元素是数据文件
         String config = args[0];
         log.debug("config:{}", config);
-        File f = new File(config);
-        boolean isRegularFile = f.exists();
+        File file = new File(config);
+        boolean isRegularFile = file.exists();
         
         if (isRegularFile) {
+            // 配置文件存在，则直接读取配置文件
             InputStream is = new FileInputStream(config);
-            p.load(is);
+            properties.load(is);
         } else {
-        	FileUtils.initProperties(config, p);
+            // 配置文件不存在则通过key:val切分来构造配置文件
+        	FileUtils.initProperties(config, properties);
         }
-        
+
         // Set the input type.
-        InputProcessor ip = null;
-        if (p.getProperty("INPUT") == null || p.getProperty("INPUT").equals("CSV")) {
-            ip = new FileInputProcessor(args[1]);
+        InputProcessor inputProcessor = null;
+        if (properties.getProperty("INPUT") == null || properties.getProperty("INPUT").equals("CSV")) {
+            // 从数据文件 读入 数据并处理
+            inputProcessor = new FileInputProcessor(args[1]);
         } else {
-            ip = new StdinProcessor();
+            // 从控制台 读入 数据并处理
+            inputProcessor = new StdinProcessor();
         }
         
         // Process the input the we received (either STDIN or as a file).
-        ip.processInput(p);
+        // 处理数据并返回结果
+        inputProcessor.processInput(properties);
     }
 }

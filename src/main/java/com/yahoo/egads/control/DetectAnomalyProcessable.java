@@ -16,8 +16,17 @@ import com.yahoo.egads.utilities.GUIUtils;
 import java.util.Properties;
 
 public class DetectAnomalyProcessable implements ProcessableObject {
+    /**
+     * 模型适配器，模型适配器需要：时序模型ts、周期、时序预测模型
+     */
     private ModelAdapter ma;
+    /**
+     * 异常检测器，异常检测器需要：时序模型ts、周期、异常检测模型
+     */
     private AnomalyDetector ad;
+    /**
+     * 配置文件
+     */
     private Properties config;
     private ArrayList<Anomaly> anomalyList;
 
@@ -33,6 +42,11 @@ public class DetectAnomalyProcessable implements ProcessableObject {
         anomalyList = new ArrayList<>();
     }
 
+    /**
+     * 异常检测的实际处理操作
+     *
+     * @throws Exception
+     */
     public void process() throws Exception {
 
         // Resetting the models

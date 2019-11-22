@@ -37,10 +37,19 @@ import com.yahoo.egads.models.tsmm.TimeSeriesModel;
 
 public class ModelAdapter { // Encapsulates a metric and the models operating on it
 
+    /**
+     * 时序数据ts
+     */
     protected TimeSeries metric = null;
     protected ArrayList<TimeSeriesModel> models = new ArrayList<TimeSeriesModel>();
     protected ArrayList<Boolean> isTrained = new ArrayList<Boolean>();
+    /**
+     * 时序数据的第一个时间戳
+     */
     protected long firstTimeStamp = 0;
+    /**
+     * 时序数据的周期
+     */
     protected long period;
 
     // Construction ///////////////////////////////////////////////////////////
@@ -140,8 +149,8 @@ public class ModelAdapter { // Encapsulates a metric and the models operating on
     public void reset() {
         int i = 0;
         for (TimeSeriesModel model : models) {
-            model.reset();
-            isTrained.set(i, false);
+            model.reset(); // 重置每一个加入的时序预测模型
+            isTrained.set(i, false); // 给每一模型打标记，表示没有训练过
             i++;
         }
     }
@@ -151,7 +160,7 @@ public class ModelAdapter { // Encapsulates a metric and the models operating on
 
         metric.data.setLogicalIndices(firstTimeStamp, period);
 
-        for (TimeSeriesModel model : models) {
+        for (TimeSeriesModel model : models) { // 训练每一个时序预测模型
             if (!isTrained.get(i)) {
                 model.train(metric.data);
                 isTrained.set(i, true);

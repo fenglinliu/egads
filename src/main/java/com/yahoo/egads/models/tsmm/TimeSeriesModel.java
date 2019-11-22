@@ -11,6 +11,9 @@ package com.yahoo.egads.models.tsmm;
 import com.yahoo.egads.data.TimeSeries;
 import com.yahoo.egads.data.Model;
 
+/**
+ * 时序预测模型
+ */
 public interface TimeSeriesModel extends Model {
     // methods ////////////////////////////////////////////////
 

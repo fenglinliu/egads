@@ -18,6 +18,9 @@ public class MetricMeta implements JsonAble {
     public String id;
     public boolean detectAnomalies = false;
     public String name;
+    /**
+     * 数据源的文件名字
+     */
     public String fileName;
     public String source;
     public String smoothing;

@@ -19,12 +19,15 @@ import com.yahoo.egads.models.tsmm.*;
 public class ProcessableObjectFactory {
 
     public static ProcessableObject create(TimeSeries ts, Properties config) {
+        // OP_TYPE 指定要进行的数据处理操作
         if (config.getProperty("OP_TYPE") == null) {
             throw new IllegalArgumentException("OP_TYPE is NULL");
         }
         if (config.getProperty("OP_TYPE").equals("DETECT_ANOMALY")) {
             ModelAdapter ma = ProcessableObjectFactory.buildTSModel(ts, config);
+            // 建立异常检测器
             AnomalyDetector ad = ProcessableObjectFactory.buildAnomalyModel(ts, config);
+            // 返回异常检测结果
             return (new DetectAnomalyProcessable(ma, ad, config));
         } else if (config.getProperty("OP_TYPE").equals("UPDATE_MODEL")) {
             ModelAdapter ma = ProcessableObjectFactory.buildTSModel(ts, config);
@@ -43,26 +46,33 @@ public class ProcessableObjectFactory {
         ModelAdapter ma = null;
         try {
             Long period = (long) -1;
-            if (config.getProperty("PERIOD") != null) {
+            if (config.getProperty("PERIOD") != null) { // 获取时序数据的周期，  0 - auto detect. -1 - disable.
               period = new Long(config.getProperty("PERIOD"));
             }
             if (period == 0) {
               if (ts.size() > 1) {
+                // TODO 算法改进，时序数据的周期性不应该被简单的计算为，头两个时间的差值
                 period = ts.data.get(1).time - ts.data.get(0).time;
               } else {
+                  // TODO 算法改进，时序数据的周期性不应该被暴力指定
                 period = (long) 1;
               }
             }
+            // 用时序和周期性去建立模型适配器
             ma = new ModelAdapter(ts, period);
+            // 获取时间预测模型
             String modelType = config.getProperty("TS_MODEL");
-
+            // 加载时序预测模型的代码实现
             Class<?> tsModelClass = Class.forName("com.yahoo.egads.models.tsmm." + modelType);
             Constructor<?> constructor = tsModelClass.getConstructor(Properties.class);
+            // 将配置文件作为构造参数，构造指定的时序预测模型
             TimeSeriesAbstractModel m = (TimeSeriesAbstractModel) constructor.newInstance(config);
+            // 给模型适配器添加上模型
             ma.addModel(m);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        // 至此，模型适配器需要的：时序模型ts、周期、时序预测模型  都加入了
         return ma;
     }
 
@@ -75,8 +85,10 @@ public class ProcessableObjectFactory {
             }
             if (period == 0) {
               if (ts.size() > 1) {
+                  // TODO 算法改进，时序数据的周期性不应该被简单的计算为，头两个时间的差值
                 period = ts.data.get(1).time - ts.data.get(0).time;
               } else {
+                  // TODO 算法改进，时序数据的周期性不应该被暴力指定
                 period = (long) 1;
               }
             }
@@ -89,6 +101,7 @@ public class ProcessableObjectFactory {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        // 异常检测器，需要的时序模型ts、周期、异常检测模型 参数已经全部放入模型
         return ad;
     }
 }
