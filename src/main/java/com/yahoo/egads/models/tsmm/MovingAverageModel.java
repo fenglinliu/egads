@@ -11,6 +11,7 @@ package com.yahoo.egads.models.tsmm;
 
 import com.yahoo.egads.data.*;
 import com.yahoo.egads.data.TimeSeries.Entry;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 import java.util.Properties;
@@ -22,6 +23,7 @@ import java.util.*;
 
 // A moving average forecast model is based on an artificially constructed time series in which the value for a
 // given time period is replaced by the mean of that value and the values for some number of preceding and succeeding time periods.
+@Slf4j
 public class MovingAverageModel extends TimeSeriesAbstractModel {
     // methods ////////////////////////////////////////////////
 
@@ -43,21 +45,22 @@ public class MovingAverageModel extends TimeSeriesAbstractModel {
     public void train(TimeSeries.DataSequence data) {
         this.data = data;
         int n = data.size();
-        DataPoint dp = null;
+        DataPoint dataPoint = null;
         DataSet observedData = new DataSet();
         for (int i = 0; i < n; i++) {
-            dp = new Observation(data.get(i).value);
-            dp.setIndependentValue("x", i);
-            observedData.add(dp);
+            dataPoint = new Observation(data.get(i).value);
+            dataPoint.setIndependentValue("x", i);
+            observedData.add(dataPoint);
         }
         observedData.setTimeVariable("x"); 
         
         // TODO: Make window configurable.
+        // TODO 代码改进，周期应该可以传进来
         forecaster = new net.sourceforge.openforecast.models.MovingAverageModel(2);
         forecaster.init(observedData);
         initForecastErrors(forecaster, data);
         
-        logger.debug(getBias() + "\t" + getMAD() + "\t" + getMAPE() + "\t" + getMSE() + "\t" + getSAE() + "\t" + 0 + "\t" + 0);
+        log.info("bias: " + getBias() + "\t" + "mad: " + getMAD() + "\t" + "mape: " + getMAPE() + "\t" + "mse: " + getMSE() + "\t" + "sae: " + getSAE() + "\t" + 0 + "\t" + 0);
     }
   
     public void update(TimeSeries.DataSequence data) {

@@ -19,11 +19,11 @@ public class DetectAnomalyProcessable implements ProcessableObject {
     /**
      * 模型适配器，模型适配器需要：时序模型ts、周期、时序预测模型
      */
-    private ModelAdapter ma;
+    private ModelAdapter modelAdapter;
     /**
      * 异常检测器，异常检测器需要：时序模型ts、周期、异常检测模型
      */
-    private AnomalyDetector ad;
+    private AnomalyDetector anomalyDetector;
     /**
      * 配置文件
      */
@@ -35,9 +35,9 @@ public class DetectAnomalyProcessable implements ProcessableObject {
     }
 
 
-    DetectAnomalyProcessable(ModelAdapter ma, AnomalyDetector ad, Properties config) {
-        this.ma = ma;
-        this.ad = ad;
+    DetectAnomalyProcessable(ModelAdapter modelAdapter, AnomalyDetector anomalyDetector, Properties config) {
+        this.modelAdapter = modelAdapter;
+        this.anomalyDetector = anomalyDetector;
         this.config = config;
         anomalyList = new ArrayList<>();
     }
@@ -50,25 +50,26 @@ public class DetectAnomalyProcessable implements ProcessableObject {
     public void process() throws Exception {
 
         // Resetting the models
-        ma.reset();
+        modelAdapter.reset();
 
         // Training the model with the whole metric
-        ma.train();
+        // 训练应该是为了得到预测值
+        modelAdapter.train();
 
         // Finding the expected values
-        ArrayList<TimeSeries.DataSequence> list = ma.forecast(
-            ma.metric.startTime(), ma.metric.lastTime());
+        ArrayList<TimeSeries.DataSequence> list = modelAdapter.forecast(
+            modelAdapter.metric.startTime(), modelAdapter.metric.lastTime());
 
         // For each model's prediction in the ModelAdapter
         for (TimeSeries.DataSequence ds : list) {
             // Reseting the anomaly detectors
-            ad.reset();
+            anomalyDetector.reset();
 
             // Unsupervised tuning of the anomaly detectors
-            ad.tune(ds, null);
+            anomalyDetector.tune(ds, null);
 
             // Detecting anomalies for each anomaly detection model in anomaly detector
-            anomalyList = ad.detect(ad.metric, ds);
+            anomalyList = anomalyDetector.detect(anomalyDetector.metric, ds);
 
             // Writing the anomalies to AnomalyDB
             if (config.getProperty("OUTPUT") != null && config.getProperty("OUTPUT").equals("ANOMALY_DB")) {
@@ -76,7 +77,7 @@ public class DetectAnomalyProcessable implements ProcessableObject {
                     // TODO: Batch Anomaly Process.
                 }
             } else if (config.getProperty("OUTPUT") != null && config.getProperty("OUTPUT").equals("GUI")) {
-                GUIUtils.plotResults(ma.metric.data, ds, anomalyList, config);
+                GUIUtils.plotResults(modelAdapter.metric.data, ds, anomalyList, config);
             } else if (config.getProperty("OUTPUT") != null && config.getProperty("OUTPUT").equals("PLOT")) {
                 for (Anomaly anomaly : anomalyList) {
                     System.out.print(anomaly.toPlotString());

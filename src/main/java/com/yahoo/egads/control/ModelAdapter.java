@@ -42,6 +42,9 @@ public class ModelAdapter { // Encapsulates a metric and the models operating on
      */
     protected TimeSeries metric = null;
     protected ArrayList<TimeSeriesModel> models = new ArrayList<TimeSeriesModel>();
+    /**
+     * 标记模型是否被训练
+     */
     protected ArrayList<Boolean> isTrained = new ArrayList<Boolean>();
     /**
      * 时序数据的第一个时间戳
