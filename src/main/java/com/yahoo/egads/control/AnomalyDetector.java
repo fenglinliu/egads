@@ -180,6 +180,7 @@ public class AnomalyDetector {
                     observedSeries.meta);
             anomaly.modelName = model.getModelName();
             anomaly.type = model.getType();
+            // 真正的异常检测代码
             anomaly.intervals = model.detect(observedSeries.data,
                     expectedSeries);
             anomaly.intervals.setLogicalIndices(firstTimeStamp, period);

@@ -29,6 +29,7 @@
 
 package com.yahoo.egads.utilities;
 
+import lombok.extern.slf4j.Slf4j;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
@@ -53,19 +54,20 @@ import java.util.HashMap;
 import com.yahoo.egads.data.AnomalyErrorStorage;
 import java.util.Properties;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 
 // Draws the time-series.
+@Slf4j
 public class GUIUtils extends ApplicationFrame {
 	private static final long serialVersionUID = 1L;
 	// Denominator used in the MASE error metric.
     float maseDenom = 0;
-    private AnomalyErrorStorage aes = new AnomalyErrorStorage();
+    private AnomalyErrorStorage anomalyErrorStorage = new AnomalyErrorStorage();
     private Properties config;
 
     private GUIUtils(String title, DataSequence orig, DataSequence predicted, ArrayList<Anomaly> anomalyList, Properties config) {
          super(title);
          this.config = config;
+         // 绘制图案
          final JFreeChart chart = createCombinedChart(orig, predicted, anomalyList);
          final ChartPanel panel = new ChartPanel(chart, true, true, true, false, true);
          panel.setPreferredSize(new java.awt.Dimension(1440, 900));
@@ -74,7 +76,9 @@ public class GUIUtils extends ApplicationFrame {
     
     /**
      * Creates a combined chart.
-     *
+     * @param tsOne 原始数据
+     * @param tsTwo 预测数据
+     * @param anomalyList 异常值
      * @return The combined chart.
      */
     private JFreeChart createCombinedChart(DataSequence tsOne, DataSequence tsTwo, ArrayList<Anomaly> anomalyList) {
@@ -105,13 +109,13 @@ public class GUIUtils extends ApplicationFrame {
         plot.add(subplot1, 1);
         plot.add(subplot2, 1);
         
-        // Add anomaly score time-series.
-        addAnomalyTS(plot, tsOne, tsTwo);
+        // Add anomaly score time-series. 计算异常得分
+//        addAnomalyTS(plot, tsOne, tsTwo);
         
         plot.setOrientation(PlotOrientation.VERTICAL);
 
         // return a new chart containing the overlaid plot.
-        return new JFreeChart("EGADS GUI",
+        return new JFreeChart("GUI",
                               JFreeChart.DEFAULT_TITLE_FONT,
                               plot,
                               true);
@@ -122,33 +126,33 @@ public class GUIUtils extends ApplicationFrame {
      */
     public void addAnomalyTS(CombinedDomainXYPlot plot, DataSequence observedSeries, DataSequence expectedSeries) {
         // Compute the time-series of errors.
-        HashMap<String, ArrayList<Float>> allErrors = aes.initAnomalyErrors(observedSeries, expectedSeries);
+        HashMap<String, ArrayList<Float>> allErrors = anomalyErrorStorage.initAnomalyErrors(observedSeries, expectedSeries);
         Float sDAutoSensitivity = (float) 0.0;
         Float amntAutoSensitivity = (float) 0.0;
+        // Denotes the expected % of anomalies
         if (config.getProperty("AUTO_SENSITIVITY_ANOMALY_PCNT") != null) {
           amntAutoSensitivity = new Float(config.getProperty("AUTO_SENSITIVITY_ANOMALY_PCNT"));
         }
-        
+        // Refers to the cluster standard deviation.
         if (config.getProperty("AUTO_SENSITIVITY_SD") != null) {
           sDAutoSensitivity = new Float(config.getProperty("AUTO_SENSITIVITY_SD"));
         }
 
         String errorDebug = "";
-        for (int i = 0; i < (aes.getIndexToError().keySet()).size(); i++) {
-            Float[] fArray = (allErrors.get(aes.getIndexToError().get(i))).toArray(new Float[(allErrors.get(aes.getIndexToError().get(i))).size()]);
-            XYDataset data1 = createDataset(fArray, aes.getIndexToError().get(i));
+        for (int i = 0; i < (anomalyErrorStorage.getIndexToError().keySet()).size(); i++) {
+            Float[] fArray = (allErrors.get(anomalyErrorStorage.getIndexToError().get(i))).toArray(new Float[(allErrors.get(anomalyErrorStorage.getIndexToError().get(i))).size()]);
+            XYDataset data1 = createDataset(fArray, anomalyErrorStorage.getIndexToError().get(i));
             XYItemRenderer renderer1 = new StandardXYItemRenderer();
-            NumberAxis rangeAxis1 = new NumberAxis(aes.getIndexToError().get(i));
+            NumberAxis rangeAxis1 = new NumberAxis(anomalyErrorStorage.getIndexToError().get(i));
             XYPlot subplot1 = new XYPlot(data1, null, rangeAxis1, renderer1);
             // Get threshold.
             Float d = AutoSensitivity.getLowDensitySensitivity(fArray, sDAutoSensitivity, amntAutoSensitivity);
             subplot1.addRangeMarker(new ValueMarker(d));
             subplot1.setRangeAxisLocation(AxisLocation.BOTTOM_OR_LEFT);
             plot.add(subplot1, 1);
-            errorDebug += aes.getIndexToError().get(i) + ": " + d + " ";
+            errorDebug += anomalyErrorStorage.getIndexToError().get(i) + ": " + d + " ";
         }
-        
-        System.out.println(errorDebug);
+        log.info(errorDebug);
     }
     
     /**
@@ -193,17 +197,19 @@ public class GUIUtils extends ApplicationFrame {
         collection.addSeries(observations);
         return collection;
     }
-    
+
     /**
-     * Starting point for the forecasting charting demo application.
-     * @param args ignored.
+     * @param orig 原始数据
+     * @param predicted 预测数据
+     * @param anomalyList 一个属性对应的异常点，多个属性则构成List集合
+     * @param config 配置文件
      */
     public static void plotResults(DataSequence orig, DataSequence predicted, ArrayList<Anomaly> anomalyList, Properties config) {
-        GUIUtils gui = new GUIUtils("EGADS GUI", orig, predicted, anomalyList, config);
+        GUIUtils gui = new GUIUtils("GUI", orig, predicted, anomalyList, config);
         gui.pack();
         gui.setVisible(true);
-        JFrame frame = new JFrame("EGADS GUI");
-        JOptionPane.showMessageDialog(frame, "Click OK to continue");
+        JFrame frame = new JFrame("GUI");
+//        JOptionPane.showMessageDialog(frame, "Click OK to continue");
 //        gui.setVisible(false);
     }
 }

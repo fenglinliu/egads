@@ -28,16 +28,16 @@ public class FileInputProcessor implements InputProcessor {
     /**
      * 从文件中读入数据，并返回结果
      *
-     * @param p
+     * @param properties
      * @throws Exception
      */
-    public void processInput(Properties p) throws Exception {
+    public void processInput(Properties properties) throws Exception {
         // 建立时序模型(time, value)，多个属性会有多个时序模型放入到List中
         ArrayList<TimeSeries> metrics = com.yahoo.egads.utilities.FileUtils
-                .createTimeSeries(this.file, p);
-        // 循环处理每一个时间序列
+                .createTimeSeries(this.file, properties);
+        // 循环处理每一个时间序列（也就是循环处理每一个属性数据）
         for (TimeSeries ts : metrics) {
-            ProcessableObject po = ProcessableObjectFactory.create(ts, p);
+            ProcessableObject po = ProcessableObjectFactory.create(ts, properties);
             po.process();
         }
     }

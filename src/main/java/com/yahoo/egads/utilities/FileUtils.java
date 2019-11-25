@@ -11,6 +11,7 @@ package com.yahoo.egads.utilities;
 
 import com.yahoo.egads.data.TimeSeries;
 import lombok.extern.slf4j.Slf4j;
+import org.python.antlr.ast.If;
 
 import java.util.StringTokenizer;
 import java.util.ArrayList;
@@ -25,7 +26,6 @@ public class FileUtils {
     // Creates a time-series from a file.
     public static ArrayList<TimeSeries> createTimeSeries(String csv_file, Properties config) {
         // Input file which needs to be parsed
-        String fileToParse = csv_file;
         BufferedReader fileReader = null;
         // 从文件提取 raw data后的 Output，Output中的每一个TimeSeries，是由 raw data中的列构成的
         ArrayList<TimeSeries> output = new ArrayList<TimeSeries>();
@@ -36,20 +36,22 @@ public class FileUtils {
         Long interval = null;
         // 时序数据的前一个时间
         Long prevTimestamp = null;
-        Integer aggr = 1;
+//        Denotes how much should the time-series be aggregated by.
+//        If set to 1 or less, this setting is ignored.
+        Integer aggregation = 1;
         // 是否填充丢失数据
         boolean fillMissing = false;
         if (config.getProperty("FILL_MISSING") != null && config.getProperty("FILL_MISSING").equals("1")) {
         	fillMissing = true;
         }
         if (config.getProperty("AGGREGATION") != null) {
-            aggr = new Integer(config.getProperty("AGGREGATION"));
+            aggregation = new Integer(config.getProperty("AGGREGATION"));
         }
         try {
             String line = "";
             // Create the file reader.
-            log.debug("从{}处读取数据", fileToParse);
-            fileReader = new BufferedReader(new FileReader(fileToParse));
+            log.debug("从{}处读取数据", csv_file);
+            fileReader = new BufferedReader(new FileReader(csv_file));
 
             // Read the file line by line
             // 第一行数据是标题而不是数据，所以要进行特殊处理
@@ -62,7 +64,7 @@ public class FileUtils {
                 Long curTimestamp = null;
                 
                 // Check for the case where there is more than one line preceding the data
-                // 跳过不是timestamp的行
+                // 跳过不是数据的行
                 if (firstLine == true) {
                     if (!isNumeric(tokens[0]) && tokens[0].equals("timestamp") == false) {
                         continue;
@@ -75,7 +77,7 @@ public class FileUtils {
                 for (int i = 1; i < tokens.length; i++) {
                     // Assume that the first line contains the column names.
                     if (firstLine) { // 首行处理方式
-                        // 初始化时序对象，设置文件名
+                        // 初始化时序对象（这个对象对应一列，也就是对应一个属性），设置文件名
                         TimeSeries ts = new TimeSeries();
                         ts.meta.fileName = csv_file;
                         // 输入数据的每一个属性列会被归结为一个TimeSeries
@@ -87,8 +89,8 @@ public class FileUtils {
                             // 如果数据列没有名字，那么系统来自定义名字
                             ts.meta.name = "metric_" + i;
                             // 如果不是列头，就对当前的ts对象设置数据
-                            output.get(i - 1).append((new Double(tokens[0])).longValue(),
-                                    new Float(tokens[i]));
+                            output.get(i - 1).append((new Double(tokens[0])).longValue()/*时间戳*/,
+                                    new Float(tokens[i])/*值*/);
                         }
                     } else { // 其他行处理方式
                         // A naive missing data handler. 数据缺失控制器，仅在fillMissing参数为true时，有效
@@ -109,7 +111,7 @@ public class FileUtils {
                                 }
                             }
                         }
-                        // Infer interval.
+                        // Infer interval. 指定时间错的时间间隔
                         if (interval == null && prevTimestamp != null) {
                             interval = curTimestamp - new Long(prevTimestamp);
                         }
@@ -134,10 +136,10 @@ public class FileUtils {
             }
         }
         // Handle aggregation.
-        if (aggr > 1) {
+        if (aggregation > 1) {
             for (TimeSeries t : output) {
-                t.data = t.aggregate(aggr);
-                t.meta.name += "_aggr_" + aggr;
+                t.data = t.aggregate(aggregation);
+                t.meta.name += "_aggr_" + aggregation;
             }
         }
         return output;

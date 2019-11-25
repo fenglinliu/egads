@@ -27,6 +27,8 @@ import java.io.File;
 @Slf4j
 public class Egads {
     public static void main(String[] args) throws Exception {
+        // 指定配置文件地址
+        args[0] = "src/test/resources/sample_config.ini";
 
         if (args.length == 0) {
             System.err.println("Usage: java Egads config.ini (input [STDIN,CSV])");
@@ -46,6 +48,8 @@ public class Egads {
             // 配置文件存在，则直接读取配置文件
             InputStream is = new FileInputStream(config);
             properties.load(is);
+            // 从配置文件，中指定数据文件的路径
+            args[1] = properties.getProperty("FILE_PATH");
         } else {
             // 配置文件不存在则通过key:val切分来构造配置文件
         	FileUtils.initProperties(config, properties);

@@ -11,6 +11,8 @@ package com.yahoo.egads.data;
 import java.util.ArrayList;
 import java.util.Date;
 import java.text.SimpleDateFormat;
+
+import com.yahoo.egads.utilities.Now;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
@@ -237,14 +239,15 @@ public class Anomaly implements JsonAble {
     public String toPerlString() {
         StringBuffer str = new StringBuffer();
         for (Interval i : intervals) {
-             str.append(i.utime + "," +
-                        metricMetaData.name + "," +
-                        metricMetaData.fileName + "," +
-                        modelName + "," +
-                        i.expectedVal + "," +
-                        i.actualVal + "," +
-                        printArray(i.anomalyScore) + "," +
-                        printArray(i.thresholdScore) + printDebugIsAnomaly(i.isAnomaly) + "\n");
+             str.append("异常点 time: " + Now.TimeStampSecond2Date(String.valueOf(i.utime), "yyyy-MM-dd hh:MM:ss") + ", || " +
+                     "异常点 属性名: " + metricMetaData.name + ", || " +
+                     "异常所属 文件名: " +  metricMetaData.fileName + ", || " +
+                     "异常检测模型名: " + modelName + ", || " +
+                     "异常点 期望值: " + i.expectedVal + ", || " +
+                     "异常点 实际值: " + i.actualVal + ", || " +
+                     "异常点 异常分数: " + printArray(i.anomalyScore) + " || " +
+                     "异常点 阈值分数: " + printArray(i.thresholdScore) + " || " +
+                     "异常点 是否异常: " + printDebugIsAnomaly(i.isAnomaly) + "\n");
         }
         return str.toString();
     }

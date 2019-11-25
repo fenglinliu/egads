@@ -37,7 +37,7 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
     private long windowStart;
     // modelName.
     public String modelName = "DBScanModel";
-    public AnomalyErrorStorage aes = new AnomalyErrorStorage();
+    public AnomalyErrorStorage anomalyErrorStorage = new AnomalyErrorStorage();
     private DBSCANClusterer<IdentifiedDoublePoint> dbscan = null;
     private int minPoints = 2;
     private double eps = 500;
@@ -86,16 +86,16 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
                      DataSequence expectedSeries,
                      IntervalSequence anomalySequence) throws Exception {
         // Compute the time-series of errors.
-        HashMap<String, ArrayList<Float>> allErrors = aes.initAnomalyErrors(observedSeries, expectedSeries);
+        HashMap<String, ArrayList<Float>> allErrors = anomalyErrorStorage.initAnomalyErrors(observedSeries, expectedSeries);
         List<IdentifiedDoublePoint> points = new ArrayList<IdentifiedDoublePoint>();
         EuclideanDistance ed = new EuclideanDistance();
         int n = observedSeries.size();
         
         for (int i = 0; i < n; i++) {
-            double[] d = new double[(aes.getIndexToError().keySet()).size()];
+            double[] d = new double[(anomalyErrorStorage.getIndexToError().keySet()).size()];
            
-            for (int e = 0; e < (aes.getIndexToError().keySet()).size(); e++) {
-                 d[e] = allErrors.get(aes.getIndexToError().get(e)).get(i);
+            for (int e = 0; e < (anomalyErrorStorage.getIndexToError().keySet()).size(); e++) {
+                 d[e] = allErrors.get(anomalyErrorStorage.getIndexToError().get(e)).get(i);
             }
             points.add(new IdentifiedDoublePoint(d, i));
         }
@@ -120,39 +120,39 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
         IntervalSequence output = new IntervalSequence();
         int n = observedSeries.size();
         // Get an array of thresholds.
-        Float[] thresholdErrors = new Float[aes.getErrorToIndex().size()];
+        Float[] thresholdErrors = new Float[anomalyErrorStorage.getErrorToIndex().size()];
         for (Map.Entry<String, Float> entry : this.threshold.entrySet()) {
-            thresholdErrors[aes.getErrorToIndex().get(entry.getKey())] = Math.abs(entry.getValue());
+            thresholdErrors[anomalyErrorStorage.getErrorToIndex().get(entry.getKey())] = Math.abs(entry.getValue());
         }
         
         // Compute the time-series of errors.
-        HashMap<String, ArrayList<Float>> allErrors = aes.initAnomalyErrors(observedSeries, expectedSeries);
+        HashMap<String, ArrayList<Float>> allErrors = anomalyErrorStorage.initAnomalyErrors(observedSeries, expectedSeries);
         List<IdentifiedDoublePoint> points = new ArrayList<IdentifiedDoublePoint>();
-        
+        // 遍历观测数据
         for (int i = 0; i < n; i++) {
-            double[] d = new double[(aes.getIndexToError().keySet()).size()];
+            double[] d = new double[(anomalyErrorStorage.getIndexToError().keySet()).size()];
            
-            for (int e = 0; e < (aes.getIndexToError().keySet()).size(); e++) {
-                 d[e] = allErrors.get(aes.getIndexToError().get(e)).get(i);
+            for (int e = 0; e < (anomalyErrorStorage.getIndexToError().keySet()).size(); e++) {
+                 d[e] = allErrors.get(anomalyErrorStorage.getIndexToError().get(e)).get(i);
             }
             points.add(new IdentifiedDoublePoint(d, i));
         }
         
         List<Cluster<IdentifiedDoublePoint>> cluster = dbscan.cluster(points);
-        for(Cluster<IdentifiedDoublePoint> c: cluster) {
-            for (IdentifiedDoublePoint p : c.getPoints()) {
-            	int i = p.getId();
-                Float[] errors = aes.computeErrorMetrics(expectedSeries.get(p.getId()).value, observedSeries.get(p.getId()).value);
+        for(Cluster<IdentifiedDoublePoint> identifiedDoublePointCluster: cluster) {
+            for (IdentifiedDoublePoint identifiedDoublePoint : identifiedDoublePointCluster.getPoints()) {
+            	int i = identifiedDoublePoint.getId();
+                Float[] errors = anomalyErrorStorage.computeErrorMetrics(expectedSeries.get(identifiedDoublePoint.getId()).value, observedSeries.get(identifiedDoublePoint.getId()).value);
                 logger.debug("TS:" + observedSeries.get(i).time + ",E:" + arrayF2S(errors) + ",TE:" + arrayF2S(thresholdErrors) + ",OV:" + observedSeries.get(i).value + ",EV:" + expectedSeries.get(i).value);
-                if (observedSeries.get(p.getId()).value != expectedSeries.get(p.getId()).value &&
-                    (isDetectionWindowPoint(maxHrsAgo, windowStart, observedSeries.get(p.getId()).time, observedSeries.get(0).time) ||
-                    (maxHrsAgo == 0 && p.getId() == (n - 1)))) {
-                    output.add(new Interval(observedSeries.get(p.getId()).time,
-                    		                p.getId(), 
+                if (observedSeries.get(identifiedDoublePoint.getId()).value != expectedSeries.get(identifiedDoublePoint.getId()).value &&
+                    (isDetectionWindowPoint(maxHrsAgo, windowStart, observedSeries.get(identifiedDoublePoint.getId()).time, observedSeries.get(0).time) ||
+                    (maxHrsAgo == 0 && identifiedDoublePoint.getId() == (n - 1)))) {
+                    output.add(new Interval(observedSeries.get(identifiedDoublePoint.getId()).time,
+                    		                identifiedDoublePoint.getId(),
                                             errors,
                                             thresholdErrors,
-                                            observedSeries.get(p.getId()).value,
-                                            expectedSeries.get(p.getId()).value));
+                                            observedSeries.get(identifiedDoublePoint.getId()).value,
+                                            expectedSeries.get(identifiedDoublePoint.getId()).value));
                 }
             }
         }
