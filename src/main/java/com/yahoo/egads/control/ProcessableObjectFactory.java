@@ -24,11 +24,12 @@ public class ProcessableObjectFactory {
             throw new IllegalArgumentException("OP_TYPE is NULL");
         }
         if (config.getProperty("OP_TYPE").equals("DETECT_ANOMALY")) {
-            ModelAdapter ma = ProcessableObjectFactory.buildTSModel(ts, config);
+            // 建立模型适配器，建立模型适配器的时候会指定Period
+            ModelAdapter modelAdapter = ProcessableObjectFactory.buildTSModel(ts, config);
             // 建立异常检测器
-            AnomalyDetector ad = ProcessableObjectFactory.buildAnomalyModel(ts, config);
-            // 返回异常检测结果
-            return (new DetectAnomalyProcessable(ma, ad, config));
+            AnomalyDetector anomalyDetector = ProcessableObjectFactory.buildAnomalyModel(ts, config);
+            // 返回可以处理的对象的实例————————异常检测对象
+            return (new DetectAnomalyProcessable(modelAdapter, anomalyDetector, config));
         } else if (config.getProperty("OP_TYPE").equals("UPDATE_MODEL")) {
             ModelAdapter ma = ProcessableObjectFactory.buildTSModel(ts, config);
             return (new UpdateModelProcessable(ma, ts.data, config));
@@ -43,7 +44,7 @@ public class ProcessableObjectFactory {
     }
 
     private static ModelAdapter buildTSModel(TimeSeries ts, Properties config) {
-        ModelAdapter ma = null;
+        ModelAdapter modelAdapter = null;
         try {
             Long period = (long) -1;
             if (config.getProperty("PERIOD") != null) { // 获取时序数据的周期，  0 - auto detect. -1 - disable.
@@ -59,7 +60,7 @@ public class ProcessableObjectFactory {
               }
             }
             // 用时序和周期性去建立模型适配器
-            ma = new ModelAdapter(ts, period);
+            modelAdapter = new ModelAdapter(ts, period);
             // 获取时间预测模型
             String modelType = config.getProperty("TS_MODEL");
             // 加载时序预测模型的代码实现
@@ -68,12 +69,12 @@ public class ProcessableObjectFactory {
             // 将配置文件作为构造参数，构造指定的时序预测模型
             TimeSeriesAbstractModel m = (TimeSeriesAbstractModel) constructor.newInstance(config);
             // 给模型适配器添加上模型
-            ma.addModel(m);
+            modelAdapter.addModel(m);
         } catch (Exception e) {
             e.printStackTrace();
         }
         // 至此，模型适配器需要的：时序模型ts、周期、时序预测模型  都加入了
-        return ma;
+        return modelAdapter;
     }
 
     private static AnomalyDetector buildAnomalyModel(TimeSeries ts, Properties config) {

@@ -162,6 +162,14 @@ public class AnomalyDetector {
         }
     }
 
+    /**
+     * 异常检测方法
+     *
+     * @param observedSeries
+     * @param expectedSeries
+     * @return
+     * @throws Exception
+     */
     public ArrayList<Anomaly> detect(TimeSeries observedSeries,
                                      TimeSeries.DataSequence expectedSeries) throws Exception {
         for (Boolean b : isTuned) {

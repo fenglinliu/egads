@@ -28,6 +28,8 @@ public class MovingAverageModel extends TimeSeriesAbstractModel {
     // methods ////////////////////////////////////////////////
 
     // The model that will be used for forecasting.
+    // 这个参数在train函数中初始化，设置的预测模型就是自己，MovingAverageModel
+    // 不过只是名字一样而已，真正的类是，开源实现的类
     private ForecastingModel forecaster;
     
     // Stores the historical values.
@@ -42,13 +44,14 @@ public class MovingAverageModel extends TimeSeriesAbstractModel {
         // At this point, reset does nothing.
     }
     
-    public void train(TimeSeries.DataSequence data) {
-        this.data = data;
-        int n = data.size();
+    public void train(TimeSeries.DataSequence originalData) {
+        this.data = originalData;
+        int n = originalData.size();
         DataPoint dataPoint = null;
+        // 观测值
         DataSet observedData = new DataSet();
         for (int i = 0; i < n; i++) {
-            dataPoint = new Observation(data.get(i).value);
+            dataPoint = new Observation(originalData.get(i).value);
             dataPoint.setIndependentValue("x", i);
             observedData.add(dataPoint);
         }
@@ -56,9 +59,9 @@ public class MovingAverageModel extends TimeSeriesAbstractModel {
         
         // TODO: Make window configurable.
         // TODO 代码改进，周期应该可以传进来
-        forecaster = new net.sourceforge.openforecast.models.MovingAverageModel(2);
+        forecaster = new net.sourceforge.openforecast.models.MovingAverageModel(originalData.size());
         forecaster.init(observedData);
-        initForecastErrors(forecaster, data);
+        initForecastErrors(forecaster, originalData);
         
         log.info("bias: " + getBias() + "\t" + "mad: " + getMAD() + "\t" + "mape: " + getMAPE() + "\t" + "mse: " + getMSE() + "\t" + "sae: " + getSAE() + "\t" + 0 + "\t" + 0);
     }
@@ -73,14 +76,25 @@ public class MovingAverageModel extends TimeSeriesAbstractModel {
 
     public void predict(TimeSeries.DataSequence sequence) throws Exception {
           int n = data.size();
+
+          // requiredDataPoints存储由历史数据构造出的 DataPoint
           DataSet requiredDataPoints = new DataSet();
           DataPoint dp;
 
           for (int count = 0; count < n; count++) {
+              /**
+               * Observation 是 DataPoint的实现
+               * 属性有：
+               * dependentValue  因变量
+               * independentValues 自变量，k-v类型，k是自变量的名字
+               * */
+              // 按照历史数据的大小来 初始化同样大小的数据点，初始的时候设置因变量是0.0
               dp = new Observation(0.0);
+              // 初始的时候设置自变量名为x， 自变量值为是数据点的索引
               dp.setIndependentValue("x", count);
               requiredDataPoints.add(dp);
           }
+          // FIXME 重写预测数据生成代码
           forecaster.forecast(requiredDataPoints);
 
           // Output the results
@@ -88,7 +102,7 @@ public class MovingAverageModel extends TimeSeriesAbstractModel {
           int i = 0;
           while (it.hasNext()) {
               DataPoint pnt = ((DataPoint) it.next());
-              logger.info(data.get(i).time + "," + data.get(i).value + "," + pnt.getDependentValue());
+              log.info(">>>>>预测 >>  " + "time: " + data.get(i).time + "," + "value: " + data.get(i).value + "," + "predict val: " + pnt.getDependentValue());
               sequence.set(i, (new Entry(data.get(i).time, (float) pnt.getDependentValue())));
               i++;
           }

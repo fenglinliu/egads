@@ -57,13 +57,17 @@ public class DetectAnomalyProcessable implements ProcessableObject {
         modelAdapter.reset();
 
         // Training the model with the whole metric
-        // 训练应该是为了得到预测值 ， 获取预测值
+        // 训练应该是为了构建预测模型
         modelAdapter.train();
 
         // Finding the expected values
+        // 获取时序数据（整个原始时序数据，从数据的起始时间到数据的截至时间）的预测值
+        // 一个模型对应一段数据，多个模型就会有多个数据，统一放到List中
+        // 这个List里面存放的是各种算法模型产生的预测值，每个算法模型产生的预测值，对应list的一个对象，一个对象是一个List<Entry>结构
         ArrayList<TimeSeries.DataSequence> list = modelAdapter.forecast(
             modelAdapter.metric.startTime(), modelAdapter.metric.lastTime());
-
+        String tdTmep = list.get(0).toString();
+        log.info("------------list.get(0):{}", list.get(0).toString());
         // For each model's prediction in the ModelAdapter
         for (TimeSeries.DataSequence dataSequence : list) {
             // Reseting the anomaly detectors
@@ -71,8 +75,13 @@ public class DetectAnomalyProcessable implements ProcessableObject {
 
             // Unsupervised tuning of the anomaly detectors 异常探测器的无监督调谐
             anomalyDetector.tune(dataSequence, null);
-
+            log.info("调谐后的 》》》》》  list.get(0) 没发生变化？:{}", dataSequence.toString().equals(tdTmep));
+            if (!dataSequence.toString().equals(tdTmep)) {
+                log.info(">>>>>tdTmep: {}", tdTmep);
+                log.info(">>>>>dataSequence.toString: {}", dataSequence.toString());
+            }
             // Detecting anomalies for each anomaly detection model in anomaly detector 异常检测
+            // anomalyDetector.metric是原始数据   dataSequence 经典模型 的 预测数据
             anomalyList = anomalyDetector.detect(anomalyDetector.metric, dataSequence);
 
             // Writing the anomalies to AnomalyDB

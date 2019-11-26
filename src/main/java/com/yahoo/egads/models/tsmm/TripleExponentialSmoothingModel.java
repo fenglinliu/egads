@@ -24,6 +24,7 @@ package com.yahoo.egads.models.tsmm;
 
 import com.yahoo.egads.data.*;
 import com.yahoo.egads.data.TimeSeries.Entry;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 import java.util.Properties;
@@ -35,6 +36,7 @@ import java.util.*;
 
 // Triple exponential smoothing - also known as the Winters method - is a refinement of the popular double exponential
 // smoothing model but adds another component which takes into account any seasonality - or periodicity - in the data.
+@Slf4j
 public class TripleExponentialSmoothingModel extends TimeSeriesAbstractModel {
     // methods ////////////////////////////////////////////////
 
@@ -99,7 +101,7 @@ public class TripleExponentialSmoothingModel extends TimeSeriesAbstractModel {
           int i = 0;
           while (it.hasNext()) {
               DataPoint pnt = ((DataPoint) it.next());
-              logger.info(data.get(i).time + "," + data.get(i).value + "," + pnt.getDependentValue());
+              log.info(">>>>>预测 >>  " + "time: " + data.get(i).time + "," + "value: " + data.get(i).value + "," + "predict val: " + pnt.getDependentValue());
               sequence.set(i, (new Entry(data.get(i).time, (float) pnt.getDependentValue())));
               i++;
           }

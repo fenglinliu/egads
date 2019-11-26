@@ -21,6 +21,12 @@ public interface TimeSeriesModel extends Model {
 
     public abstract void update(TimeSeries.DataSequence data) throws Exception;
 
+    /**
+     * 对指定时间序列 产生 预测时间序列
+     *
+     * @param sequence
+     * @throws Exception
+     */
     // predicts the values of the time series specified by the 'time' fields of the sequence and sets the 'value' fields of the sequence
     public abstract void predict(TimeSeries.DataSequence sequence) throws Exception;
 }

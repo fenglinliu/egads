@@ -11,6 +11,8 @@ package com.yahoo.egads.data;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
@@ -62,6 +64,7 @@ public class TimeSeries implements JsonAble, Serializable {
         }
     }
 
+    @ToString
     public static class DataSequence extends ArrayList<Entry> implements Serializable {
         private static final long serialVersionUID = 1L;
 

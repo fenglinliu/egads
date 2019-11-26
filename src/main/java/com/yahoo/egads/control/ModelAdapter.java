@@ -38,7 +38,7 @@ import com.yahoo.egads.models.tsmm.TimeSeriesModel;
 public class ModelAdapter { // Encapsulates a metric and the models operating on it
 
     /**
-     * 时序数据ts
+     * 原本的时序数据ts
      */
     protected TimeSeries metric = null;
     protected ArrayList<TimeSeriesModel> models = new ArrayList<TimeSeriesModel>();
@@ -200,17 +200,19 @@ public class ModelAdapter { // Encapsulates a metric and the models operating on
         }
 
         ArrayList<TimeSeries.DataSequence> result = new ArrayList<TimeSeries.DataSequence>();
-
+        // 这些模型是之前 TS_MODEL 参数
         for (TimeSeriesModel model : models) {
+            // 由from，to从原始的时序数据剪裁出来的新时序
         	TimeSeries.DataSequence sequence = null;
         	if (period != -1) {
+        	    // 设置 切割出来的新时序 的 周期，这个周期 是在 建立异常检测器 时设置的
         		sequence = new TimeSeries.DataSequence(from, to, period);
         		sequence.setLogicalIndices(firstTimeStamp, period);
         	} else {
         		sequence = new TimeSeries.DataSequence(metric.data.getTimes(), metric.data.getValues());
         	}
-
-        	model.predict(sequence);
+            // 对切割出来的时序数据进行预测，预测的时候用的模型就是model，model的实现有MA算法等
+        	model.predict(sequence); // 模型会修改sequence的值
             result.add(sequence);
         }
         return result;
