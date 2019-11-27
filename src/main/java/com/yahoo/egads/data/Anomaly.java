@@ -20,8 +20,14 @@ public class Anomaly implements JsonAble {
     // member data ////////////////////////////////////////////////
 
     public String id;
+    /**
+     * 异常类型有：离群点、变化点、异常时序，离群点是本次检测以异常类型
+     */
     public String type = "";
     public String modelName = "";
+    /**
+     * 引用的观测数据的 计量元数据
+     */
     public MetricMeta metricMetaData; // reference, not owner
     public IntervalSequence intervals = new IntervalSequence();
 

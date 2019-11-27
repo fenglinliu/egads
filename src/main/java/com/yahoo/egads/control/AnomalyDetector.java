@@ -189,6 +189,7 @@ public class AnomalyDetector {
             Anomaly anomaly = new Anomaly(observedSeries.meta.name/*观测数据的属性名字*/,
                     observedSeries.meta);
             anomaly.modelName = model.getModelName();
+            // 异常类型有：离群点、变化点、异常时序，离群点是本次检测以异常类型
             anomaly.type = model.getType();
             // 真正的异常检测代码
             anomaly.intervals = model.detect(observedSeries.data,

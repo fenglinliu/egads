@@ -96,6 +96,7 @@ public class ProcessableObjectFactory {
             ad = new AnomalyDetector(ts, period);
             String modelType = config.getProperty("AD_MODEL");
 
+            // 用动态类加载的方式来构造 异常检测模型，比如DBSCAN等，构造函数的初始化参数是配置文件
             Class<?> tsModelClass = Class.forName("com.yahoo.egads.models.adm." + modelType);
             Constructor<?> constructor = tsModelClass.getConstructor(Properties.class);
             ad.addModel((AnomalyDetectionAbstractModel) constructor.newInstance(config));

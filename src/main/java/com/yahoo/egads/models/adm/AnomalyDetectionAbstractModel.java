@@ -8,6 +8,7 @@ package com.yahoo.egads.models.adm;
 
 import java.util.Properties;
 
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 import java.util.Map;
@@ -15,12 +16,24 @@ import java.util.HashMap;
 
 import com.yahoo.egads.data.JsonEncoder;
 
+@Slf4j
 public abstract class AnomalyDetectionAbstractModel implements AnomalyDetectionModel {
 
-    protected org.apache.logging.log4j.Logger logger;
+    /**
+     * 聚类的标准差，默认是3
+     */
     protected float sDAutoSensitivity = 3;
+    /**
+     * 数据集中异常的期望百分比，比如，期待有百分之一的异常，默认值为百分之5
+     */
     protected float amntAutoSensitivity = (float) 0.05;
+    /**
+     * 输出方式，如控制台，数据，GUI等
+     */
     protected String outputDest = "";
+    /**
+     * 异常检测的模型名字
+     */
 	protected String modelName;
 
     public String getModelName() {
@@ -40,20 +53,25 @@ public abstract class AnomalyDetectionAbstractModel implements AnomalyDetectionM
     public void fromJson(JSONObject json_obj) throws Exception {
         JsonEncoder.fromJson(this, json_obj);
     }
-    
+
+    /**
+     * 数组格式 转String ，用 : 隔开
+     * @param input
+     * @return
+     */
     protected String arrayF2S (Float[] input) {
     	String ret = new String();
     	if (input.length == 0) {
     		return "";
     	}
     	if (input[0] == null) {
-    		ret = "Inf";
+    		ret = "无";
     	} else {
     		ret = input[0].toString();
     	}
     	for (int ix = 1; ix < input.length; ix++) {
             if (input[ix] == null) {
-                ret += ":Inf";
+                ret += ":无";
             } else {
     		    ret += ":" + input[ix].toString();
             }
@@ -66,6 +84,7 @@ public abstract class AnomalyDetectionAbstractModel implements AnomalyDetectionM
         if (s == null) {
             return new HashMap<String, Float>();
         }
+        // 配置文件格式是这样的：mape#10,mase#15
         String[] pairs = s.split(",");
         Map<String, Float> myMap = new HashMap<String, Float>();
         for (int i = 0; i < pairs.length; i++) {
@@ -73,19 +92,21 @@ public abstract class AnomalyDetectionAbstractModel implements AnomalyDetectionM
             String[] keyValue = pair.split("#");
             myMap.put(keyValue[0], Float.valueOf(keyValue[1]));
         }
+        // Map的组成：配置文件中的mape#10，切割为mape------》10
         return myMap;
     }
 
     // Force the user to define this constructor that acts as a
     // factory method.
     public AnomalyDetectionAbstractModel(Properties config) {
-    	logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass().getName());
         // Set the assumed amount of anomaly in your data.
         if (config.getProperty("AUTO_SENSITIVITY_ANOMALY_PCNT") != null) {
+            // 数据集中异常的期望百分比
             this.amntAutoSensitivity = new Float(config.getProperty("AUTO_SENSITIVITY_ANOMALY_PCNT"));
         }
         // Set the standard deviation for auto sensitivity.
         if (config.getProperty("AUTO_SENSITIVITY_SD") != null) {
+            // 聚类的标准差
             this.sDAutoSensitivity = new Float(config.getProperty("AUTO_SENSITIVITY_SD"));
         }
       	this.outputDest = config.getProperty("OUTPUT");

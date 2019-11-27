@@ -21,9 +21,11 @@ import java.util.HashMap;
 import com.yahoo.egads.data.AnomalyErrorStorage;
 import com.yahoo.egads.utilities.AutoSensitivity;
 
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+@Slf4j
 public class NaiveModel extends AnomalyDetectionAbstractModel {
 
     // The constructor takes a set of properties
@@ -171,7 +173,7 @@ public class NaiveModel extends AnomalyDetectionAbstractModel {
                     (isDetectionWindowPoint(maxHrsAgo, windowStart, observedSeries.get(anomalyIndex).time, observedSeries.get(0).time) ||
         						(maxHrsAgo == 0 && i == (n - 1)))) {
                 	anomaly = 0;
-                    logger.debug("TS:" + observedSeries.get(anomalyIndex).time + ",E:" + arrayF2S(errors) + ",TH:" + arrayF2S(thresholdErrors) + ",OV:" + observedSeries.get(anomalyIndex).value + ",EV:" + expected[i]);
+                    log.info("TS:" + observedSeries.get(anomalyIndex).time + ",E:" + arrayF2S(errors) + ",TH:" + arrayF2S(thresholdErrors) + ",OV:" + observedSeries.get(anomalyIndex).value + ",EV:" + expected[i]);
                     output.add(new Interval(observedSeries.get(anomalyIndex).time,
                     		   anomalyIndex,
                                errors,

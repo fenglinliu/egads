@@ -22,6 +22,7 @@ import org.apache.commons.math3.ml.clustering.DoublePoint;
 
 /**
  * A simple implementation of {@link Clusterable} for points with double coordinates, with an added id.
+ * 记录Id和对应的数组序列
  * @version $Id$
  * @since 3.2
  */

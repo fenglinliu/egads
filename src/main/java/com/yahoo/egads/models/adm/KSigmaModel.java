@@ -19,9 +19,11 @@ import com.yahoo.egads.data.TimeSeries.DataSequence;
 import com.yahoo.egads.utilities.AutoSensitivity;
 import com.yahoo.egads.data.AnomalyErrorStorage;
 
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+@Slf4j
 public class KSigmaModel extends AnomalyDetectionAbstractModel {
 
     // The constructor takes a set of properties
@@ -122,7 +124,7 @@ public class KSigmaModel extends AnomalyDetectionAbstractModel {
         
         for (int i = 0; i < n; i++) {
             Float[] errors = aes.computeErrorMetrics(expectedSeries.get(i).value, observedSeries.get(i).value);
-            logger.debug("TS:" + observedSeries.get(i).time + ",E:" + arrayF2S(errors) + ",TE:" + arrayF2S(thresholdErrors) + ",OV:" + observedSeries.get(i).value + ",EV:" + expectedSeries.get(i).value);
+            log.info("TS:" + observedSeries.get(i).time + ",E:" + arrayF2S(errors) + ",TE:" + arrayF2S(thresholdErrors) + ",OV:" + observedSeries.get(i).value + ",EV:" + expectedSeries.get(i).value);
             if (observedSeries.get(i).value != expectedSeries.get(i).value &&
                 threshSum > (float) 0.0 &&
                 isAnomaly(errors, threshold) == true &&

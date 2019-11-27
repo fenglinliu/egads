@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Properties;
 
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
@@ -40,6 +41,7 @@ import com.yahoo.egads.utilities.ListUtils;
  *
  */
 
+@Slf4j
 public class AdaptiveKernelDensityChangePointDetector extends AnomalyDetectionAbstractModel {
 
     // buffering the residuals
@@ -170,7 +172,7 @@ public class AdaptiveKernelDensityChangePointDetector extends AnomalyDetectionAb
                 if (isCP && j < (changePoints.size() - 1)) {
                     j++;
                 }
-                logger.debug("TS:" + observedSeries.get(i).time + ",SC:" + String.join(":", arrayF2S(new Float[] {score[i]})) + ",LV:" + arrayF2S(new Float[] {level[i]}) + ",OV:" + observedSeries.get(i).value + ",EV:" + expectedSeries.get(i).value);
+                log.info("TS:" + observedSeries.get(i).time + ",SC:" + String.join(":", arrayF2S(new Float[] {score[i]})) + ",LV:" + arrayF2S(new Float[] {level[i]}) + ",OV:" + observedSeries.get(i).value + ",EV:" + expectedSeries.get(i).value);
 
                 result.add(new Interval(observedSeries.get(i).time, 
                 		                i,

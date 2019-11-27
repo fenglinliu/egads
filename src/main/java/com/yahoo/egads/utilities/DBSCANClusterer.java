@@ -63,9 +63,11 @@ import org.apache.commons.math3.ml.clustering.Clusterer;
 public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
  
     /** Maximum radius of the neighborhood to be considered. */
+    // 要考虑邻域的最大半径
     private final double              eps;
  
     /** Minimum number of points needed for a cluster. */
+    // 聚类所需的最小点数
     private final int                 minPts;
  
     /** Status of a point during the clustering process. */
@@ -87,6 +89,7 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
      */
     public DBSCANClusterer(final double eps, final int minPts)
         throws NotPositiveException {
+        // TODO DBSCAN这里的距离度量算法可以做修改
         this(eps, minPts, new EuclideanDistance());
     }
  
@@ -100,6 +103,7 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
      */
     public DBSCANClusterer(final double eps, final int minPts, final DistanceMeasure measure)
         throws NotPositiveException {
+        // 初始化父类的距离度量算法，因为本类继承了父类的distance方法
         super(measure);
  
         if (eps < 0.0d) {
@@ -130,6 +134,7 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
  
     /**
      * Performs DBSCAN cluster analysis.
+     * points里面的每一个point，存放了点在时序数据的中索引和点对应的误差统计数据集合d[]
      *
      * @param points the points to cluster
      * @return the list of clusters
@@ -139,12 +144,15 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
  
         // sanity checks
         MathUtils.checkNotNull(points);
- 
+
         final List<Cluster<T>> clusters = new ArrayList<Cluster<T>>();
+        // 存放一个异常cluster
         final List<Cluster<T>> anomalousClusters = new ArrayList<Cluster<T>>();
+        // 所有的异常点聚到一起
         final Cluster<T> anomalyCluster = new Cluster<T>();
         final Map<Clusterable, PointStatus> visited = new HashMap<Clusterable, PointStatus>();
- 
+
+        // 遍历所有的误差统计数据点
         for (final T point : points) {
             if (visited.get(point) != null) {
                 continue;
@@ -215,6 +223,7 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
     private List<T> getNeighbors(final T point, final Collection<T> points) {
         final List<T> neighbors = new ArrayList<T>();
         for (final T neighbor : points) {
+            // 距离度量
             if (point != neighbor && distance(neighbor, point) <= eps) {
                 neighbors.add(neighbor);
             }
