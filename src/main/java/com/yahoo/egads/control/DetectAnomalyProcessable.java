@@ -84,6 +84,11 @@ public class DetectAnomalyProcessable implements ProcessableObject {
             // anomalyDetector.metric是原始数据   dataSequence 经典模型 的 预测数据
             anomalyList = anomalyDetector.detect(anomalyDetector.metric, dataSequence);
 
+            /******************************************************
+             * 以下代码的作用只是进行输出展示，可以输出到数据库
+             * ，也可以输出到控制台和GUI界面
+             */
+
             // Writing the anomalies to AnomalyDB
             // OUTPUT  有 控制台输出 和 GUI输出 两种 ， ANOMALY_DB是输出到异常检测数据库
             if (config.getProperty("OUTPUT") != null && config.getProperty("OUTPUT").equals("ANOMALY_DB")) {

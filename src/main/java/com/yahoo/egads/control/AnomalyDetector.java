@@ -180,11 +180,13 @@ public class AnomalyDetector {
         }
 
         ArrayList<Anomaly> result = new ArrayList<Anomaly>();
+        // 设置  观测数据  的逻辑索引  period是在构造异常检测器的时候设置的值
         observedSeries.data.setLogicalIndices(firstTimeStamp, period);
+        // 设置  期望数据  的逻辑索引 period是在构造异常检测器的时候设置的值
         expectedSeries.setLogicalIndices(firstTimeStamp, period);
 
         for (AnomalyDetectionModel model : models) {
-            Anomaly anomaly = new Anomaly(observedSeries.meta.name,
+            Anomaly anomaly = new Anomaly(observedSeries.meta.name/*观测数据的属性名字*/,
                     observedSeries.meta);
             anomaly.modelName = model.getModelName();
             anomaly.type = model.getType();

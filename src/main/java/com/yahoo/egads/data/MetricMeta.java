@@ -12,10 +12,16 @@ package com.yahoo.egads.data;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+/**
+ * 计量元数据
+ */
 public class MetricMeta implements JsonAble {
     // member data ////////////////////////////////////////////////
 
     public String id;
+    /**
+     * 是否存在异常的flag标记
+     */
     public boolean detectAnomalies = false;
     /**
      * 数据的属性名
@@ -27,6 +33,9 @@ public class MetricMeta implements JsonAble {
     public String fileName;
     public String source;
     public String smoothing;
+    /**
+     * 季节性
+     */
     public long[] seasons;
 
     // construction ////////////////////////////////////////////////

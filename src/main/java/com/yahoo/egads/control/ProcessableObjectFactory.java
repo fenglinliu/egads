@@ -26,7 +26,7 @@ public class ProcessableObjectFactory {
         if (config.getProperty("OP_TYPE").equals("DETECT_ANOMALY")) {
             // 建立模型适配器，建立模型适配器的时候会指定Period
             ModelAdapter modelAdapter = ProcessableObjectFactory.buildTSModel(ts, config);
-            // 建立异常检测器
+            // 建立异常检测器（需要进行异常检测的原始数据{从ts中来}，以及 数据的 Period{从config中来}）
             AnomalyDetector anomalyDetector = ProcessableObjectFactory.buildAnomalyModel(ts, config);
             // 返回可以处理的对象的实例————————异常检测对象
             return (new DetectAnomalyProcessable(modelAdapter, anomalyDetector, config));
