@@ -222,8 +222,8 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
      */
     private List<T> getNeighbors(final T point, final Collection<T> points) {
         final List<T> neighbors = new ArrayList<T>();
-        for (final T neighbor : points) {
-            // 距离度量
+        for (final T neighbor/*邻居节点也是point类型*/ : points) {
+            // 距离度量，计算误差统计指标数组之间的距离
             if (point != neighbor && distance(neighbor, point) <= eps) {
                 neighbors.add(neighbor);
             }

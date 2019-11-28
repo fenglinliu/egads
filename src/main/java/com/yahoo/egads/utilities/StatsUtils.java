@@ -41,6 +41,7 @@ public class StatsUtils {
     }
     
     // Computes the mean of X.
+    // 计算均值
     public static Float getMean(Float[] data) {
         Float sum = (float) 0.0;
         int n = data.length;
@@ -51,6 +52,7 @@ public class StatsUtils {
     }
     
     // Compute the standard deviation given the population mean.
+    // 根据平均值计算标准差
     public static Float getSD(Float[] data, Float mean) {
         int n = data.length;
         Float temp = (float) 0.0;

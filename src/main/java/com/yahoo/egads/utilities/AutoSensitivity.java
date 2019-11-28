@@ -64,11 +64,20 @@ public class AutoSensitivity {
         }
         return toReturn;
     }
-    
+
+    /**
+     * TODO 从一个data数据中去找阈值
+     *
+     * @param data
+     * @param sDAutoSensitivity
+     * @return
+     */
     // Uses the simple KSigma rule to get the anoamly sensitivity.
     // Assumes that we have a normal distribution.
-    public static Float getKSigmaSensitivity(Float[] data, float sDAutoSensitivity) {
+    public static Float getKSigmaSensitivity(Float[] data, float sDAutoSensitivity/*聚类的标准差*/) {
+        // 计算数据的均值
          Float mean = StatsUtils.getMean(data);
+         // 计算数据的标准差
          Float sd = StatsUtils.getSD(data, mean);
          return (mean + (sd * sDAutoSensitivity));
     }

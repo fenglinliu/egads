@@ -66,7 +66,13 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
      * minPoints和eps是初始化dbscanClusterer的重要参数
      */
     private DBSCANClusterer<IdentifiedDoublePoint> dbscanClusterer = null;
+    /**
+     * 邻域的最大半径
+     */
     private int minPoints = 2;
+    /**
+     *  聚类所需的最小点数
+     */
     private double eps = 500;
     
     public DBScanModel(Properties config) {
@@ -212,7 +218,7 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
                 {
                     output.add(new Interval(observedSeries.get(tempAnomalousPoint.getId()).time/*观测时间*/,
                     		                tempAnomalousPoint.getId()/*逻辑索引*/,
-                                            errors/*误差指标*/,
+                                            errors/*误差指标-这个误差指标也就作为异常分数*/,
                                             thresholdErrors/*配置文件指定的误差阈值*/,
                                             observedSeries.get(tempAnomalousPoint.getId()).value/*观测值*/,
                                             expectedSeries.get(tempAnomalousPoint.getId()).value/*预测值*/));
