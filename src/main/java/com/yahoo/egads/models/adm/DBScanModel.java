@@ -20,6 +20,7 @@ import com.yahoo.egads.data.AnomalyErrorStorage;
 import com.yahoo.egads.data.TimeSeries.DataSequence;
 import com.yahoo.egads.utilities.DBSCANClusterer;
 
+import com.yahoo.egads.utilities.StatisticsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.ml.clustering.Cluster;
 
@@ -38,7 +39,15 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
     // 如果配置文件没有配置则是一个EmptyMap
     // 这个阈值，指的是误差（例如，mape、mase等误差指标）指标的阈值
     private Map<String, Float> threshold;
+    /**
+     * 现在距离异常发生时间的最大窗口值，单位小时
+     */
     private int maxHrsAgo;
+    /**
+     * #指定timeseries中的检测窗口开始时间。
+     * #如果您想使用以下最大异常时间(MAX_ANOMALY_TIME_AGO)
+     * #将此参数设为“0”，系统默认配置为0
+     */
     private long windowStart;
     // modelName.
     public String modelName = "DBScanModel";
@@ -67,7 +76,7 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
         if (config.getProperty("MAX_ANOMALY_TIME_AGO") == null) {
             throw new IllegalArgumentException("MAX_ANOMALY_TIME_AGO is NULL");
         }
-        // 异常时间戳的最大限制值
+        // 现在距离异常发生时间的最大窗口值，单位小时
         this.maxHrsAgo = new Integer(config.getProperty("MAX_ANOMALY_TIME_AGO"));
         // 指定timeseries中的检测窗口开始时间
         this.windowStart = new Long(config.getProperty("DETECTION_WINDOW_START_TIME"));
@@ -149,7 +158,7 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
     @Override
     public IntervalSequence detect(DataSequence observedSeries,
                                    DataSequence expectedSeries) throws Exception {
-        
+        // 输出该时序数据的异常点组成的序列    IntervalSequence是List<Interval>
         IntervalSequence output = new IntervalSequence();
         int n = observedSeries.size();
         // Get an array of thresholds.
@@ -176,8 +185,10 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
             points.add(new IdentifiedDoublePoint(d, i));
         }
         // 对所有点的误差统计度量进行聚类，将异常的cluster返回回来，对于DBSCAN，anomalousClusters的大小为1
+        // 聚到异常类的点的个数 == （观测值 != 预测值）的点的个数  (经过验证二者不相等，聚类的确起到了作用)
         List<Cluster<IdentifiedDoublePoint>> anomalousClusters = dbscanClusterer.cluster(points);
-
+        log.info("************************* 聚到异常类的点的个数: {}  ==? （观测值 != 预测值）的点的个数 :{} ", anomalousClusters.get(0).getPoints().size()
+                , StatisticsUtils.countDifferent(observedSeries, expectedSeries).size());
 
         for(Cluster<IdentifiedDoublePoint> tempAnomalousCluster: anomalousClusters) {
             // 去除异常聚类中的每个数据点（一个数据点的ID是他的索引，d[]是他的统计误差数据的集合）
@@ -187,21 +198,28 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
             	// 根据异常点的预测值和观测值再计算一次误差指标
                 Float[] errors = anomalyErrorStorage.computeErrorMetrics(expectedSeries.get(tempAnomalousPoint.getId()).value/*获取该异常点的预测值*/,
                         observedSeries.get(tempAnomalousPoint.getId()).value/*获取该异常点的观测值*/);
-                log.info("异常点 {}的观测值：TS:" + observedSeries.get(i).time + ", 5种误差度量值 E:" + arrayF2S(errors) + "误差指标的 阈值 ,TE:" + arrayF2S(thresholdErrors)
-                        + ",OV:" + observedSeries.get(i).value + ",EV:" + expectedSeries.get(i).value, i);
-                if (observedSeries.get(tempAnomalousPoint.getId()).value != expectedSeries.get(tempAnomalousPoint.getId()).value &&
-                    (isDetectionWindowPoint(maxHrsAgo, windowStart, observedSeries.get(tempAnomalousPoint.getId()).time, observedSeries.get(0).time) ||
-                    (maxHrsAgo == 0 && tempAnomalousPoint.getId() == (n - 1)))) {
-                    output.add(new Interval(observedSeries.get(tempAnomalousPoint.getId()).time,
-                    		                tempAnomalousPoint.getId(),
-                                            errors,
-                                            thresholdErrors,
-                                            observedSeries.get(tempAnomalousPoint.getId()).value,
-                                            expectedSeries.get(tempAnomalousPoint.getId()).value));
+                log.info("异常点 {}的观测时间：TS:" + observedSeries.get(i).time + ", 5种误差度量值 E:" + arrayF2S(errors) + "误差指标的 阈值 ,TE:" + arrayF2S(thresholdErrors)
+                        + ", 观测值  OV:" + observedSeries.get(i).value + ", 期望值 EV:" + expectedSeries.get(i).value, i);
+                if (observedSeries.get(tempAnomalousPoint.getId()).value != expectedSeries.get(tempAnomalousPoint.getId()).value /*该异常点的观测值 不等于期望值*/
+                        &&/*异常值要在检测窗口内*/
+                    (
+                            isDetectionWindowPoint/*true*/(maxHrsAgo/*现在距离异常发生时间的最大窗口值，单位小时*/, windowStart/*指定timeseries中的检测窗口开始时间， 系统默认是0*/,
+                                    observedSeries.get(tempAnomalousPoint.getId()).time/*当前点的时间*/, observedSeries.get(0).time/*时序的起始时间*/)
+                                    ||
+                                    (maxHrsAgo == 0/*false*/ && tempAnomalousPoint.getId() == (n - 1)/*该异常点是观测时序的最后一个点*/)
+                    )
+                )
+                {
+                    output.add(new Interval(observedSeries.get(tempAnomalousPoint.getId()).time/*观测时间*/,
+                    		                tempAnomalousPoint.getId()/*逻辑索引*/,
+                                            errors/*误差指标*/,
+                                            thresholdErrors/*配置文件指定的误差阈值*/,
+                                            observedSeries.get(tempAnomalousPoint.getId()).value/*观测值*/,
+                                            expectedSeries.get(tempAnomalousPoint.getId()).value/*预测值*/));
                 }
             }
         }
-
+        log.info("&&&&&&&&&&&& 异常类中所含点的个数：{}, 经过窗口检测后所含有异常点的个数：{}", anomalousClusters.get(0).getPoints().size(), output.size());
         return output;
     }
 }

@@ -167,7 +167,8 @@ public class AnomalyDetector {
      *
      * @param observedSeries
      * @param expectedSeries
-     * @return
+     * @return 每个模型检测到的异常序列放入一个Anomaly.intervals中
+     * 如果使用了多个异常检测模型，则返回结果构成  ArrayList<Anomaly>
      * @throws Exception
      */
     public ArrayList<Anomaly> detect(TimeSeries observedSeries,
@@ -191,7 +192,7 @@ public class AnomalyDetector {
             anomaly.modelName = model.getModelName();
             // 异常类型有：离群点、变化点、异常时序，离群点是本次检测以异常类型
             anomaly.type = model.getType();
-            // 真正的异常检测代码
+            // 真正的异常检测代码，返回所有异常点组成的时序
             anomaly.intervals = model.detect(observedSeries.data,
                     expectedSeries);
             anomaly.intervals.setLogicalIndices(firstTimeStamp, period);

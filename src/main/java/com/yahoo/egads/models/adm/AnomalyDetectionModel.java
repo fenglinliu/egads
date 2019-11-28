@@ -25,6 +25,7 @@ public interface AnomalyDetectionModel extends Model {
 
     // method to check whether the anomaly value is inside the
     // detection window or not
+    // 判断异常值是否在检测窗口内
     public boolean isDetectionWindowPoint(int maxHrsAgo,
                                           long windowStart,
                                           long anomalyTime,

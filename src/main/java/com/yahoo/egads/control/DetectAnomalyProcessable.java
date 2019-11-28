@@ -82,6 +82,8 @@ public class DetectAnomalyProcessable implements ProcessableObject {
             }
             // Detecting anomalies for each anomaly detection model in anomaly detector 异常检测
             // anomalyDetector.metric是原始数据   dataSequence 经典模型 的 预测数据
+            // 异常的序列，如果只用了一个异常检测模型  则 anomalyList的大小为1
+            // 异常序列在 anomaly.intervals 中
             anomalyList = anomalyDetector.detect(anomalyDetector.metric, dataSequence);
 
             /******************************************************
@@ -98,11 +100,11 @@ public class DetectAnomalyProcessable implements ProcessableObject {
             } else if (config.getProperty("OUTPUT") != null && config.getProperty("OUTPUT").equals("GUI")) {
                 // 页面绘图函数, modelAdapter.metric.data - 原始数据， dataSequence - 预测数据， anomalyList - 一个属性的异常点， config - 配置文件
                 GUIUtils.plotResults(modelAdapter.metric.data, dataSequence, anomalyList, config);
-                printAnomalyList();
+                printAnomalyList(anomalyList);
             } else if (config.getProperty("OUTPUT") != null && config.getProperty("OUTPUT").equals("PLOT")) {
-                printAnomalyList();
+                printAnomalyList(anomalyList);
             } else { // 如果没有设置输出，默认输出到控制台
-                printAnomalyList();
+                printAnomalyList(anomalyList);
             }
         }
     }
@@ -111,8 +113,8 @@ public class DetectAnomalyProcessable implements ProcessableObject {
         return getAnomalyList();
     }
 
-    private void printAnomalyList() {
-        if (this.anomalyList == null || this.anomalyList.size() == 0) {
+    private void printAnomalyList( ArrayList<Anomaly> anomalyList) {
+        if (anomalyList == null || anomalyList.size() == 0) {
             log.info("异常检测结果:{}", "没有异常");
         } else {
             for (Anomaly anomaly : anomalyList) {

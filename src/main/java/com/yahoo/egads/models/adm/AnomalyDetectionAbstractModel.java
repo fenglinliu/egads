@@ -116,11 +116,11 @@ public abstract class AnomalyDetectionAbstractModel implements AnomalyDetectionM
     public boolean isDetectionWindowPoint(int maxHrsAgo, long windowStart, long anomalyTime, long startTime) {
         long unixTime = System.currentTimeMillis() / 1000L;
         // consider 'windowStart' if it is greater than or equal to first timestamp
-        if (windowStart >= startTime) {
+        if (windowStart >= startTime) { // 时间位置关系   startTime   ------》   windowStart    ------》   anomalyTime
             return (anomalyTime - windowStart) > 0;
         } else {
             // use detection window as max hours specified
-            return ((unixTime - anomalyTime) / 3600) < maxHrsAgo;
+            return ((unixTime - anomalyTime) / 3600/*anomalyTime 的单位是s*/) < maxHrsAgo; /*现在距离异常发生时间的最大窗口值*/
         }
     }
 }

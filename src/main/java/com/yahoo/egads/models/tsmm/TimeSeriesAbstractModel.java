@@ -21,7 +21,7 @@ import com.yahoo.egads.data.JsonEncoder;
 
 public abstract class TimeSeriesAbstractModel implements TimeSeriesModel {
 
-    private static final double TOLERANCE = 0.00000001;
+    public static final double TOLERANCE = 0.00000001;
 
     // Accuracy stats for this model.
     protected double bias;
