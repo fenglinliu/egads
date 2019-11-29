@@ -65,7 +65,7 @@ public class DBScanModel extends AnomalyDetectionAbstractModel {
      * 并对minPoints和eps进行赋值
      * minPoints和eps是初始化dbscanClusterer的重要参数
      */
-    private DBSCANClusterer<IdentifiedDoublePoint> dbscanClusterer = null;
+    public DBSCANClusterer<IdentifiedDoublePoint> dbscanClusterer = null;
     /**
      * 邻域的最大半径
      */

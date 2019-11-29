@@ -24,7 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
- 
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.exception.NotPositiveException;
 import org.apache.commons.math3.exception.NullArgumentException;
 import org.apache.commons.math3.ml.distance.DistanceMeasure;
@@ -60,6 +61,7 @@ import org.apache.commons.math3.ml.clustering.Clusterer;
  * @version $Id: DBSCANClusterer.java 1461866 2013-03-27 21:54:36Z tn $
  * @since 3.2
  */
+@Slf4j
 public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
  
     /** Maximum radius of the neighborhood to be considered. */
@@ -144,7 +146,7 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
  
         // sanity checks
         MathUtils.checkNotNull(points);
-
+        // 返回所有的聚类
         final List<Cluster<T>> clusters = new ArrayList<Cluster<T>>();
         // 存放一个异常cluster
         final List<Cluster<T>> anomalousClusters = new ArrayList<Cluster<T>>();
@@ -158,17 +160,57 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
                 continue;
             }
             final List<T> neighbors = getNeighbors(point, points);
-            if (neighbors.size() >= minPts) {
+            if (neighbors.size() >= minPts) { // 核心点
+                // DBSCAN does not care about center points
+                final Cluster<T> cluster = new Cluster<T>(); // 这个cluster变量用于记录点并返回
+                clusters.add(/*返回上边这个final cluster*/expandCluster(cluster, point/*点本身*/, neighbors/*点的邻居*/, points, visited/*访问记录*/));
+            } else { // 非核心点
+                visited.put(point, PointStatus.NOISE);
+                anomalyCluster.addPoint(point);
+            }
+        }
+        anomalousClusters.add(anomalyCluster);
+        return anomalousClusters;
+    }
+
+    public List<Cluster<T>> cluster_getClusters_MY(final Collection<T> points, int type) throws NullArgumentException {
+        int total = 0;
+        // sanity checks
+        MathUtils.checkNotNull(points);
+        // 返回所有的聚类
+        final List<Cluster<T>> clusters = new ArrayList<Cluster<T>>();
+        // 存放一个异常cluster
+        final List<Cluster<T>> anomalousClusters = new ArrayList<Cluster<T>>();
+        // 所有的异常点聚到一起
+        final Cluster<T> anomalyCluster = new Cluster<T>();
+        final Map<Clusterable, PointStatus> visited = new HashMap<Clusterable, PointStatus>();
+
+        // 遍历所有的误差统计数据点
+        for (final T point : points) {
+            if (visited.get(point) != null) {
+                continue;
+            } // 重集合Points中抽取一个未处理的点
+            final List<T> neighbors = getNeighbors(point, points); // 寻找可达的点
+            if (neighbors.size() /*邻居个数*/ >= minPts) { // 如果可达点的个数大于最小聚类点个数，则这个该点为 核心点，然后point+neiberhoods组成一个簇
                 // DBSCAN does not care about center points
                 final Cluster<T> cluster = new Cluster<T>();
                 clusters.add(expandCluster(cluster, point, neighbors, points, visited));
+                total += cluster.getPoints().size();
             } else {
                 visited.put(point, PointStatus.NOISE);
                 anomalyCluster.addPoint(point);
             }
         }
         anomalousClusters.add(anomalyCluster);
- 
+        total += anomalyCluster.getPoints().size();
+        // 噪声
+//        if (anomalyCluster.getPoints().size() != 0) {
+//            clusters.add(anomalyCluster);
+//        }
+//        log.info("cluster 方法中 points.zise:{} 聚类的点数:{}", points.size(), total);
+        if (type == 0) {
+            return clusters;
+        }
         return anomalousClusters;
     }
  
@@ -183,18 +225,18 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
      * @return the expanded cluster
      */
     private Cluster<T> expandCluster(final Cluster<T> cluster,
-                                     final T point,
-                                     final List<T> neighbors,
-                                     final Collection<T> points,
-                                     final Map<Clusterable, PointStatus> visited) {
-        cluster.addPoint(point);
+                                     final T point/*点本身*/,
+                                     final List<T> neighbors/*点的邻居*/,
+                                     final Collection<T> points/*所有点的集合*/,
+                                     final Map<Clusterable, PointStatus> visited/*点的访问记录*/) {
+        cluster.addPoint(point); // 加入核心点
         visited.put(point, PointStatus.PART_OF_CLUSTER);
  
         List<T> seeds = new ArrayList<T>(neighbors);
         int index = 0;
-        while (index < seeds.size()) {
-            final T current = seeds.get(index);
-            PointStatus pStatus = visited.get(current);
+        while (index < seeds.size()) { // 遍历所有的邻居
+            final T current = seeds.get(index); // 获取一个邻居点
+            PointStatus pStatus = visited.get(current); // 设置访问标记
             // only check non-visited points
             if (pStatus == null) {
                 final List<T> currentNeighbors = getNeighbors(current, points);
@@ -205,7 +247,7 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
  
             if (pStatus != PointStatus.PART_OF_CLUSTER) {
                 visited.put(current, PointStatus.PART_OF_CLUSTER);
-                cluster.addPoint(current);
+                cluster.addPoint(current); // 加入邻居
             }
  
             index++;
@@ -215,6 +257,7 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
  
     /**
      * Returns a list of density-reachable neighbors of a {@code point}.
+     * 寻找以point为原点，半径为eps的点，组成集合neighbors（不包括自己）
      *
      * @param point the point to look for
      * @param points possible neighbors
@@ -224,7 +267,7 @@ public class DBSCANClusterer<T extends Clusterable> extends Clusterer<T> {
         final List<T> neighbors = new ArrayList<T>();
         for (final T neighbor/*邻居节点也是point类型*/ : points) {
             // 距离度量，计算误差统计指标数组之间的距离
-            if (point != neighbor && distance(neighbor, point) <= eps) {
+            if (point != neighbor/*除开自己*/ && distance(neighbor, point) <= eps) {
                 neighbors.add(neighbor);
             }
         }

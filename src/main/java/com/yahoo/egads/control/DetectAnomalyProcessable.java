@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import com.yahoo.egads.data.Anomaly;
 import com.yahoo.egads.data.TimeSeries;
 import com.yahoo.egads.utilities.GUIUtils;
+import com.yahoo.egads.utilities.Now;
+import com.yahoo.egads.utilities.StatisticsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -119,7 +121,19 @@ public class DetectAnomalyProcessable implements ProcessableObject {
         } else {
             for (Anomaly anomaly : anomalyList) {
                 log.info(StringUtils.isBlank(anomaly.toPerlString()) ? "没有异常" : "存在异常 " + anomaly.intervals.size() + "\n" + anomaly.toPerlString());
+                log.info("命中个数:{}", isTrue(anomaly.intervals));
             }
         }
+    }
+
+    private int isTrue(Anomaly.IntervalSequence intervals) {
+        int r = 0;
+        for (int i = 0; i < intervals.size(); i++) {
+            Anomaly.Interval interval = intervals.get(i);
+            if (StatisticsUtils.BK.contains(Now.TimeStampSecond2Date(String.valueOf(interval.utime), "yyyy-MM-dd hh:MM:ss"))) {
+                r++;
+            }
+        }
+        return r;
     }
 }

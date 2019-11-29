@@ -19,6 +19,7 @@ import com.yahoo.egads.data.TimeSeries.DataSequence;
 import com.yahoo.egads.utilities.AutoSensitivity;
 import com.yahoo.egads.data.AnomalyErrorStorage;
 
+import com.yahoo.egads.utilities.StatisticsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.json.JSONStringer;
@@ -87,19 +88,41 @@ public class KSigmaModel extends AnomalyDetectionAbstractModel {
             // defined by the user.
             if (!threshold.containsKey(anomalyErrorStorage.getIndexToError().get(i)/*误差指标名*/)/*配置文件中 没有 设置的误差指标阈值*/) {
                 Float[] fArray/*误差指标 的 值序Array列*/ = (allErrors.get(anomalyErrorStorage.getIndexToError().get(i)/*误差指标名*/)/*误差指标 的 值序List列*/).toArray(new Float[(allErrors.get(anomalyErrorStorage.getIndexToError().get(i)/*误差指标名*/)/*误差指标 的 值序List列*/).size()]);
-                threshold.put(anomalyErrorStorage.getIndexToError().get(i)/*误差指标名*/, /*返回指标的阈值*/AutoSensitivity.getKSigmaSensitivity(fArray, sDAutoSensitivity/*聚类的标准差*/));
+                //threshold.put(anomalyErrorStorage.getIndexToError().get(i)/*误差指标名*/, /*返回指标的阈值*/AutoSensitivity.getKSigmaSensitivity(fArray, sDAutoSensitivity/*聚类的标准差*/));
+                threshold.put(anomalyErrorStorage.getIndexToError().get(i)/*误差指标名*/, /*返回指标的阈值*/StatisticsUtils.getThreshold(fArray));
+
             }
         }
     }
 
     // Returns true this point is identified as a potential anomaly.
-    public boolean isAnomaly(Float[] errors, Map<String, Float> threshold/*系统阈值的误差阈值*/) {
+    public boolean isAnomalyADV(Float[] errors, Map<String, Float> threshold/*系统阈值的误差阈值， 5个值*/) {
+        // Cycle through all available thresholds and return
+        // true if any of them matches.
+        int trueVote = 0;
+        int falseVote = 0;
+        for (Map.Entry<String, Float> entry/*每一个entry的k是误差指标名，v是误差指标的阈值*/ : threshold.entrySet()) {
+            // disable mapee and mape.
+            if (anomalyErrorStorage.getErrorToIndex().containsKey(entry.getKey())/*引用的误差指标一定要是提前设定了的*/ == true &&
+                Math.abs(errors[anomalyErrorStorage.getErrorToIndex().get(entry.getKey())])/*计算出的误差阈值*/ >= Math.abs(entry.getValue())/*系统阈值的误差阈值*/) {
+                trueVote++;
+            } else {
+                falseVote++;
+            }
+        }
+        return (trueVote > falseVote) ? true : false;
+    }
+
+    // Returns true this point is identified as a potential anomaly.
+    public boolean isAnomaly(Float[] errors, Map<String, Float> threshold/*系统阈值的误差阈值， 5个值*/) {
+
         // Cycle through all available thresholds and return
         // true if any of them matches.
         for (Map.Entry<String, Float> entry/*每一个entry的k是误差指标名，v是误差指标的阈值*/ : threshold.entrySet()) {
             // disable mapee and mape.
             if (anomalyErrorStorage.getErrorToIndex().containsKey(entry.getKey())/*引用的误差指标一定要是提前设定了的*/ == true &&
-                Math.abs(errors[anomalyErrorStorage.getErrorToIndex().get(entry.getKey())])/*计算出的误差阈值*/ >= Math.abs(entry.getValue())/*系统阈值的误差阈值*/) {
+                    Math.abs(errors[anomalyErrorStorage.getErrorToIndex().get(entry.getKey())])/*计算出的误差阈值*/ >= Math.abs(entry.getValue())/*系统阈值的误差阈值*/) {
+                // 只要有一个指标超过了，就判定为异常
                 return true;
             }
         }
@@ -128,12 +151,12 @@ public class KSigmaModel extends AnomalyDetectionAbstractModel {
         int n = observedSeries.size();
         
         for (int i = 0; i < n; i++) {
-            // 计算吴总统计的误差数据
+            // 计算统计的误差数据，5个值
             Float[] errors = anomalyErrorStorage.computeErrorMetrics(expectedSeries.get(i).value, observedSeries.get(i).value);
             log.info("TS:" + observedSeries.get(i).time + ",E:" + arrayF2S(errors) + ",TE:" + arrayF2S(thresholdErrors) + ",OV:" + observedSeries.get(i).value + ",EV:" + expectedSeries.get(i).value);
             if (observedSeries.get(i).value != expectedSeries.get(i).value/*观测值和预期值不一样的不一定是异常*/ &&
                 threshSum > (float) 0.0 &&
-                isAnomaly(errors, threshold/*系统阈值的误差阈值*/)/*最关键的阈值检测代码*/ == true &&
+                isAnomaly(errors, threshold/*系统阈值的误差阈值， 5个值*/)/*最关键的阈值检测代码*/ == true &&
                 (isDetectionWindowPoint(maxHrsAgo, windowStart, observedSeries.get(i).time, observedSeries.get(0).time) ||
                 (maxHrsAgo == 0 && i == (n - 1)))) {
                 output.add(new Interval(observedSeries.get(i).time,

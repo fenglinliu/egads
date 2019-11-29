@@ -97,6 +97,13 @@ public class AnomalyErrorStorage {
         if (expected == (float) 0.0) {
           div = (float) 0.0000000001;
         }
+        // 预测经度估计的四大指标MASE、MAE、MAPE、相对误差
+        // 绝对误差的定义：测量值A和真实值L之差。E1=A-L
+        //相对误差定义：绝对误差和真实值的比值。E2=(A-L)/L
+
+        //Rob Hydman在他的前瞻性文章《间歇性需求的预测精度度量》中指出，平均绝对标度误差是MASE四种方法中“总是给出合理结果”的唯一方法。
+        // Another Look at Forecast Accuracy Metrics for Intermittent Demand
+        // 然而，Prestwich等人注意到，当每个样本需求相同时，不能使用它。
 
         // 参考 https://www.statisticshowto.datasciencecentral.com/absolute-error/
         // Mean Absolute Error.
@@ -106,7 +113,7 @@ public class AnomalyErrorStorage {
         // 对称平均绝对误差
         float smape = (200 * Math.abs(actual - expected)) / ((Math.abs(actual) + Math.abs(expected)) == 0 ? (float) 1.0 : (float) (Math.abs(actual) + Math.abs(expected)));
         // Mean Absolute Percentage Error.
-        // 绝对百分比误差
+        // 绝对百分比误差(相对误差)
         // https://www.statisticshowto.datasciencecentral.com/mean-absolute-percentage-error-mape/
         float mape = Math.abs(actual) == 0 ? (float) 0.0 : ((100 * Math.abs(actual - expected)) / (float) Math.abs(actual));
         // Mean Absolute Scaled Error.
