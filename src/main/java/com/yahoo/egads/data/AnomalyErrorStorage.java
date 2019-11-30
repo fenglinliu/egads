@@ -107,17 +107,17 @@ public class AnomalyErrorStorage {
 
         // 参考 https://www.statisticshowto.datasciencecentral.com/absolute-error/
         // Mean Absolute Error.
-        // mae 平均绝对误差
+        // mae 平均绝对误差 √
         float mae = Math.abs(actual - expected);
         // Symmetric Mean Absolute Error.
         // 对称平均绝对误差
         float smape = (200 * Math.abs(actual - expected)) / ((Math.abs(actual) + Math.abs(expected)) == 0 ? (float) 1.0 : (float) (Math.abs(actual) + Math.abs(expected)));
         // Mean Absolute Percentage Error.
-        // 绝对百分比误差(相对误差)
+        // 绝对百分比误差(相对误差) √
         // https://www.statisticshowto.datasciencecentral.com/mean-absolute-percentage-error-mape/
         float mape = Math.abs(actual) == 0 ? (float) 0.0 : ((100 * Math.abs(actual - expected)) / (float) Math.abs(actual));
         // Mean Absolute Scaled Error.
-        // 平均绝对标度误差
+        // 平均绝对标度误差 √
         // https://www.statisticshowto.datasciencecentral.com/mean-absolute-scaled-error/
         float mase = Math.abs(maseDenom) == 0.0 ? (float) 0.0 : Math.abs(actual - expected) / Math.abs(maseDenom);
         // Mean Absolute Percentage Error (scaled by the expected value).
