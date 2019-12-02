@@ -84,9 +84,9 @@ public class GUIUtils extends ApplicationFrame {
     private JFreeChart createCombinedChart(DataSequence tsOne, DataSequence tsTwo, ArrayList<Anomaly> anomalyList) {
 
         // create subplot 1.
-        final XYDataset data1 = createDataset(tsOne, "Original");
+        final XYDataset data1 = createDataset(tsOne, "观测数据");
         final XYItemRenderer renderer1 = new StandardXYItemRenderer();
-        final NumberAxis rangeAxis1 = new NumberAxis("Original Value");
+        final NumberAxis rangeAxis1 = new NumberAxis("观测数据值");
         XYPlot subplot1 = new XYPlot(data1, null, rangeAxis1, renderer1);
         subplot1.setRangeAxisLocation(AxisLocation.BOTTOM_OR_LEFT);
         
@@ -94,15 +94,15 @@ public class GUIUtils extends ApplicationFrame {
         addAnomalies(subplot1, anomalyList);
         
         // create subplot 2.
-        final XYDataset data2 = createDataset(tsTwo, "Forecast");
+        final XYDataset data2 = createDataset(tsTwo, "预测数据");
         final XYItemRenderer renderer2 = new StandardXYItemRenderer();
-        final NumberAxis rangeAxis2 = new NumberAxis("Forecast Value");
+        final NumberAxis rangeAxis2 = new NumberAxis("预测数据值");
         rangeAxis2.setAutoRangeIncludesZero(false);
         final XYPlot subplot2 = new XYPlot(data2, null, rangeAxis2, renderer2);
         subplot2.setRangeAxisLocation(AxisLocation.TOP_OR_LEFT);
 
         // parent plot.
-        final CombinedDomainXYPlot plot = new CombinedDomainXYPlot(new NumberAxis("Time"));
+        final CombinedDomainXYPlot plot = new CombinedDomainXYPlot(new NumberAxis("时间"));
         plot.setGap(10.0);
         
         // add the subplots.
@@ -115,7 +115,7 @@ public class GUIUtils extends ApplicationFrame {
         plot.setOrientation(PlotOrientation.VERTICAL);
 
         // return a new chart containing the overlaid plot.
-        return new JFreeChart("GUI",
+        return new JFreeChart("异常检测",
                               JFreeChart.DEFAULT_TITLE_FONT,
                               plot,
                               true);
